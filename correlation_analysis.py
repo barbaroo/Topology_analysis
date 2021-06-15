@@ -12,6 +12,8 @@ import scipy.stats
 import scipy as sy
 import matplotlib.pyplot as plt
 from xlwt import Workbook
+import seaborn as sns
+import pandas as pd
 #=============================================================================
 
 def line(x, a , b):
@@ -101,7 +103,8 @@ def fractions_fit(data_two, data_multi):
 def remove_pdbs(database, pdb_strings):  
     n_pdbs=len(pdb_strings)
     for t in range(n_pdbs):
-        database=database[database['PDB']!=pdb_strings[t]]
+        
+        database=database[database['PDB Id']!=pdb_strings[t]]
                                           
     N_contacts = "N contacts" in database
     if N_contacts:
@@ -176,4 +179,73 @@ def corr_matrix(higher, ave, lower):
     pvalue[pvalue<0.95]=0.0
     corr_corrected=corr_coeff*pvalue
     return corr_corrected
+
+
+def correlation_map_database(lower_lim, upper_lim, data_two, data_multi, corr_quantity):
+    data_multi_lowerCO=data_multi[data_multi['Contact Order']<lower_lim]
+    data_two_lowerCO=data_two[data_two['Contact Order']<lower_lim]
+
+    data_multi_ave=data_multi[(data_multi['Contact Order']>lower_lim) &(data_multi['Contact Order']<upper_lim)]
+    data_two_ave=data_two[(data_two['Contact Order']>lower_lim) &(data_two['Contact Order']<upper_lim)]
+
+    data_multi_higherCO=data_multi[data_multi['Contact Order']>upper_lim]
+    data_two_higherCO=data_two[data_two['Contact Order']>upper_lim]
+    
+    list_db=[data_two_lowerCO,data_multi_lowerCO,data_two_ave,data_multi_ave,data_two_higherCO,data_multi_higherCO]
+    
+    matrix=np.zeros((len(list_db),1))
+    pvalue=np.zeros((len(list_db),1))
+    
+    for t in range(len(list_db)):        
+        CO_corr=correlate(list_db[t][corr_quantity],list_db[t]['ln kf'])
+        pvalue[t]="%.2f" % round(CO_corr[1], 2)
+        matrix[t]="%.2f" % round(CO_corr[0], 2)
+        
+    pvalue=1-pvalue
+    pvalue[pvalue>=0.95]=1
+    pvalue[pvalue<0.95]=0.0
+    corr_corrected=matrix*pvalue
+    
+    return corr_corrected
+
+
+def barplot_fractions(data, upper_lim, lower_lim):
+    data_lowerCO=data[data['Contact Order']<lower_lim]
+    data_ave=data[(data['Contact Order']>lower_lim) &(data['Contact Order']<upper_lim)]
+    data_higherCO=data[data['Contact Order']>upper_lim]
+    
+    CO_df=[data_lowerCO,data_ave,data_higherCO]
+    new_df=[]
+    for t in range(len(CO_df)):
+        series=np.array(CO_df[t]['Series'])
+        parallel=np.array(CO_df[t]['Parallel'])
+        cross=np.array(CO_df[t]['Cross'])
+
+        tot_len=len(series)+len(parallel)+len(cross)
+        nu_top_vec=np.zeros(tot_len)
+        nu_top_vec[0:len(series)]=np.copy(series)
+        nu_top_vec[len(series):len(series)+len(parallel)]=np.copy(parallel)
+        nu_top_vec[len(series)+len(parallel):tot_len]=np.copy(cross)
+        vec_fraction=['']*tot_len
+        vec_fraction[0:len(series)]=np.copy(['Series']*len(series))
+        vec_fraction[len(series):len(series)+len(parallel)]=np.copy((['Parallel']*len(parallel)))
+        vec_fraction[len(series)+len(parallel):tot_len]=np.copy(['Cross']*len(cross))
+
+        data_new= {'Top_num':nu_top_vec, 'Top_fract':vec_fraction}
+        df= pd.DataFrame(data=data_new)
+        new_df.append(df)
+        
+        #Make plot
+    ig, ax = plt.subplots(1, 3, figsize=(14,3))
+    sns.set(style="whitegrid", color_codes=True)
+    pal = sns.color_palette("Set2", 3)
+    labels=["Lower CO","Average CO","Upper CO"]
+    for t in range(len(new_df)):
+        sns.barplot(x="Top_fract", y="Top_num", hue="Top_fract", data=new_df[t], dodge = False,
+                        palette=pal, ax=ax[t] )
+        ax[t].set_ylim(0.0,0.9)
+        ax[t].set_title(labels[t], fontsize=20)
+        ax[t].legend(fontsize=14)
+        
+    return ig
     
