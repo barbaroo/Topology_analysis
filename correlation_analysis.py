@@ -142,10 +142,7 @@ def normalize(x):
         return (x - np.min(x)) / np.ptp(x)   
     
     
-def set_layout():
-    SMALL_SIZE = 15
-    MEDIUM_SIZE = 18
-    BIGGER_SIZE = 21
+def set_layout(SMALL_SIZE=15,MEDIUM_SIZE=18,BIGGER_SIZE=21 ):
 
     plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
     plt.rc('axes', titlesize=MEDIUM_SIZE)     # fontsize of the axes title
@@ -154,3 +151,29 @@ def set_layout():
     plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
     plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
     plt.rc('figure', titlesize=BIGGER_SIZE)
+    
+def corr_matrix(higher, ave, lower):
+    higher_matrix=higher.to_numpy()
+    ave_matrix=ave.to_numpy()
+    lower_matrix=lower.to_numpy()
+    matrix=[lower_matrix,ave_matrix,higher_matrix]
+    #print(matrix[1])
+    
+    dim_row=lower_matrix.shape[0]
+    dim_col=lower_matrix.shape[1]-1
+    corr_matrix=np.zeros((dim_row*3,dim_col))
+    corr_coeff=np.zeros((dim_col, int(dim_col/2)))
+    pvalue=np.zeros((dim_col, int(dim_col/2)))
+    
+    for t in range(3):
+        corr_matrix[t*dim_row:dim_row*(t+1), 0:dim_col]=np.copy(matrix[t][0:dim_row, 0:dim_col])
+    for t in range(3):    
+        corr_coeff[:,t]=corr_matrix[:,t*2]
+        pvalue[:,t]=corr_matrix[:,(t*2)+1]
+  
+    pvalue=1-pvalue
+    pvalue[pvalue>=0.95]=1
+    pvalue[pvalue<0.95]=0.0
+    corr_corrected=corr_coeff*pvalue
+    return corr_corrected
+    
