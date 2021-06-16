@@ -65,8 +65,12 @@ def fractions_fit(data_two, data_multi):
     fig.set_figheight(4)
     fig.set_figwidth(15)
     ax[0].set_title('Series', fontsize=20)
-    ax[0].scatter(data_two["Series"],data_two['Folding rate'],label= 'corr_two= {}, p= {}'.format(series_corr_two, series_pvalue_two), color= color_graph)
-    ax[0].scatter(data_multi["Series"],data_multi['Folding rate'],label= 'corr_multi= {}, p={}'.format(series_corr_multi, series_pvalue_multi), color=color_graph_2)
+    ax[0].scatter(data_two["Series"],data_two['Folding rate'],
+                  label= 'corr_two= {}, p= {}'.format(series_corr_two, series_pvalue_two), 
+                  color= color_graph)
+    ax[0].scatter(data_multi["Series"],data_multi['Folding rate'],
+                  label= 'corr_multi= {}, p={}'.format(series_corr_multi, series_pvalue_multi), 
+                  color=color_graph_2)
     fit_Series_multi=lin_fit(data_multi["Series"],data_multi['Folding rate'])
     fit_Series_two=lin_fit(data_two["Series"],data_two['Folding rate'])
     ax[0].legend()
@@ -77,8 +81,12 @@ def fractions_fit(data_two, data_multi):
 
     
     ax[1].set_title('Parallel', fontsize=20)
-    ax[1].scatter(data_two["Parallel"],data_two['Folding rate'], label= 'corr_two= {}, p= {}'.format(parallel_corr_two, parallel_pvalue_two), color= color_graph)
-    ax[1].scatter(data_multi["Parallel"],data_multi['Folding rate'], label= 'corr_multi= {}, p= {}'.format(parallel_corr_multi, parallel_pvalue_multi), color= color_graph_2)
+    ax[1].scatter(data_two["Parallel"],data_two['Folding rate'], 
+                  label= 'corr_two= {}, p= {}'.format(parallel_corr_two, parallel_pvalue_two), 
+                  color= color_graph)
+    ax[1].scatter(data_multi["Parallel"],data_multi['Folding rate'], 
+                  label= 'corr_multi= {}, p= {}'.format(parallel_corr_multi, parallel_pvalue_multi),
+                        color= color_graph_2)
     fit_Parallel_multi=lin_fit(data_multi["Parallel"],data_multi['Folding rate'])
     fit_Parallel_two=lin_fit(data_two["Parallel"],data_two['Folding rate'])
     ax[1].legend()
@@ -87,8 +95,12 @@ def fractions_fit(data_two, data_multi):
     ax[1].set_xlabel('Parallel (%)')
   
     ax[2].set_title('Cross',fontsize=20)
-    ax[2].scatter(data_two["Cross"],data_two['Folding rate'], label= 'corr_two= {}, p= {}'.format(cross_corr_two, cross_pvalue_two), color= color_graph)
-    ax[2].scatter(data_multi["Cross"],data_multi['Folding rate'], label= 'corr_multi= {}, p= {}'.format(cross_corr_multi, cross_pvalue_multi), color= color_graph_2)
+    ax[2].scatter(data_two["Cross"],data_two['Folding rate'], 
+                  label= 'corr_two= {}, p= {}'.format(cross_corr_two, cross_pvalue_two), 
+                  color= color_graph)
+    ax[2].scatter(data_multi["Cross"],data_multi['Folding rate'], 
+                  label= 'corr_multi= {}, p= {}'.format(cross_corr_multi, cross_pvalue_multi),
+                  color= color_graph_2)
     fit_Cross_multi=lin_fit(data_multi["Cross"],data_multi['Folding rate'])
     fit_Cross_two=lin_fit(data_two["Cross"],data_two['Folding rate'])
     ax[2].legend()  
@@ -96,8 +108,11 @@ def fractions_fit(data_two, data_multi):
     ax[2].plot(data_multi["Cross"],fit_Cross_multi,color= color_graph_2)
     ax[2].set_xlabel('Cross (%)')
     
-    correlation_vec_two=[series_corr_two, series_pvalue_two, parallel_corr_two, parallel_pvalue_two, cross_corr_two, cross_pvalue_two]  
-    correlation_vec_multi=[series_corr_multi, series_pvalue_multi, parallel_corr_multi,parallel_pvalue_multi, cross_corr_multi, cross_pvalue_multi] 
+    correlation_vec_two=[series_corr_two, series_pvalue_two, parallel_corr_two,
+                         parallel_pvalue_two, cross_corr_two, cross_pvalue_two]  
+    correlation_vec_multi=[series_corr_multi, series_pvalue_multi,
+                           parallel_corr_multi,parallel_pvalue_multi, 
+                           cross_corr_multi, cross_pvalue_multi] 
     return correlation_vec_two,correlation_vec_multi
         
 def remove_pdbs(database, pdb_strings):  
@@ -110,14 +125,17 @@ def remove_pdbs(database, pdb_strings):
     if N_contacts:
         
         database_zeros=database[database['N contacts']==0]
+   
         if (database_zeros.empty == False):
             print('ERROR: NUMBER OF CONTACTS=0')
             print(database_zeros) 
             print('number of proteins with zero contacts:')
             print(len(database_zeros))
-        database= database[database['N contacts']!=0]     
+        database= database[database['N contacts']!=0]    
+        print('Faulty pdbs removed: CT fractions')
     else:
-        print('No contacts')
+        
+        print('Faulty pdbs removed: CT residues')
     return database   
 
 
@@ -191,7 +209,8 @@ def correlation_map_database(lower_lim, upper_lim, data_two, data_multi, corr_qu
     data_multi_higherCO=data_multi[data_multi['Contact Order']>upper_lim]
     data_two_higherCO=data_two[data_two['Contact Order']>upper_lim]
     
-    list_db=[data_two_lowerCO,data_multi_lowerCO,data_two_ave,data_multi_ave,data_two_higherCO,data_multi_higherCO]
+    list_db=[data_two_lowerCO,data_multi_lowerCO,data_two_ave,data_multi_ave,
+             data_two_higherCO,data_multi_higherCO]
     
     matrix=np.zeros((len(list_db),1))
     pvalue=np.zeros((len(list_db),1))
@@ -241,11 +260,38 @@ def barplot_fractions(data, upper_lim, lower_lim):
     pal = sns.color_palette("Set2", 3)
     labels=["Lower CO","Average CO","Upper CO"]
     for t in range(len(new_df)):
-        sns.barplot(x="Top_fract", y="Top_num", hue="Top_fract", data=new_df[t], dodge = False,
-                        palette=pal, ax=ax[t] )
+        sns.barplot(x="Top_fract", y="Top_num", hue="Top_fract", data=new_df[t],
+                    dodge = False, palette=pal, ax=ax[t] )
         ax[t].set_ylim(0.0,0.9)
         ax[t].set_title(labels[t], fontsize=20)
         ax[t].legend(fontsize=14)
         
     return ig
     
+
+def merge_datasets(data, data_CT, string_pdb):
+    N_contacts = "N contacts" in data_CT
+    if N_contacts:
+        #Normalize parameters by number of contacts
+        parallel_norm= data_CT['Parallel']/data_CT['N contacts']
+        series_norm= data_CT['Series']/data_CT['N contacts']
+        cross_norm=data_CT['Cross']/data_CT['N contacts']
+
+        #Create normalized merged database
+        df_norm={'PDB Id':data['PDB Id'], 'Protein Length': data['Protein Length'], 
+                 'Contact Order': data['Contact Order'], 
+         'Folding rate': data['ln kf'], 'Folding Type':data['Folding Type'], 
+         'Parallel': parallel_norm, 
+         'Series': series_norm, 'Cross': cross_norm, 'N contacts':data_CT['N contacts']}
+        df= pd.DataFrame(data=df_norm)
+    else:
+        protein_df={'PDB Id':data['PDB Id'], 'Protein Length': data['Protein Length'], 
+        'Contact Order': data['Contact Order'], 'Folding rate': data['ln kf'], 
+        'Folding Type':data['Folding Type'], 'N circuits': data_CT['N circuits'],
+        'mean length':data_CT['meanlength'], 
+        'N circuits norm':data_CT['N circuits']/data['New Length'],
+        'New Length':data['New Length']}
+        df = pd.DataFrame(data=protein_df)
+
+    df=remove_pdbs(df, string_pdb)
+    return df
