@@ -40,26 +40,35 @@ def lin_fit(x,y):
 def fractions_fit(data_two, data_multi):
     color_graph= 'b'
     color_graph_2= 'orange'
-    #sns.set_style('darkgrid')
-    series_corr=correlate(data_two["Series"],data_two['Folding rate'])
-    series_pvalue_two="%.3f" % round(series_corr[1], 3)
-    series_corr_two="%.2f" % round(series_corr[0], 2)
-    parallel_corr=correlate(data_two["Parallel"],data_two['Folding rate'])
-    parallel_pvalue_two="%.3f" % round(parallel_corr[1], 3)
-    parallel_corr_two="%.2f" % round(parallel_corr[0], 2)
-    cross_corr=correlate(data_two["Cross"],data_two['Folding rate'])
-    cross_pvalue_two="%.3f" % round(cross_corr[1], 3)  
-    cross_corr_two="%.2f" % round(cross_corr[0], 2)    
 
-    series_corr=correlate(data_multi["Series"],data_multi['Folding rate'])
-    series_pvalue_multi="%.3f" % round(series_corr[1], 3)
-    series_corr_multi="%.2f" % round(series_corr[0], 2)
-    parallel_corr=correlate(data_multi["Parallel"],data_multi['Folding rate'])
-    parallel_pvalue_multi="%.3f" % round(parallel_corr[1], 3)
-    parallel_corr_multi="%.2f" % round(parallel_corr[0], 2)
-    cross_corr=correlate(data_multi["Cross"],data_multi['Folding rate'])
-    cross_pvalue_multi="%.3f" % round(cross_corr[1], 3)
-    cross_corr_multi="%.2f" % round(cross_corr[0], 2)
+    fractions=['Series', 'Parallel', 'Cross']
+    dfs=[data_two, data_multi]
+    corr_coeffs=[]
+    p_coeffs=[]
+
+    index=0
+    for t in range(len(dfs)):
+        for j in range(len(fractions)):
+            corr=correlate(dfs[t][fractions[j]],dfs[t]['Folding rate'])
+            corr_coeffs.append("%.2f" % round(corr[0], 2))
+            p_coeffs.append("%.3f" % round(corr[1], 3))
+            if (p_coeffs[index]=='0.000'):
+                 p_coeffs[index]= "%.1E" % corr[1]
+            index=index+1
+
+    series_corr_two=corr_coeffs[0]
+    parallel_corr_two=corr_coeffs[1]
+    cross_corr_two=corr_coeffs[2]
+    series_corr_multi=corr_coeffs[3]
+    parallel_corr_multi=corr_coeffs[4]
+    cross_corr_multi=corr_coeffs[5]
+
+    series_pvalue_two=p_coeffs[0]
+    parallel_pvalue_two=p_coeffs[1]
+    cross_pvalue_two=p_coeffs[2]
+    series_pvalue_multi=p_coeffs[3]
+    parallel_pvalue_multi=p_coeffs[4]
+    cross_pvalue_multi=p_coeffs[5]
 
     fig, ax = plt.subplots(nrows=1, ncols=3)
     fig.set_figheight(4)
@@ -107,6 +116,7 @@ def fractions_fit(data_two, data_multi):
     ax[2].plot(data_two["Cross"],fit_Cross_two,color= color_graph)
     ax[2].plot(data_multi["Cross"],fit_Cross_multi,color= color_graph_2)
     ax[2].set_xlabel('Cross (%)')
+    
     
     correlation_vec_two=[series_corr_two, series_pvalue_two, parallel_corr_two,
                          parallel_pvalue_two, cross_corr_two, cross_pvalue_two]  
@@ -271,6 +281,7 @@ def barplot_fractions(data, upper_lim, lower_lim):
 
 def merge_datasets(data, data_CT, string_pdb):
     N_contacts = "N contacts" in data_CT
+    N_circuits= 'N circuits' in data_CT
     if N_contacts:
         #Normalize parameters by number of contacts
         parallel_norm= data_CT['Parallel']/data_CT['N contacts']
@@ -284,7 +295,23 @@ def merge_datasets(data, data_CT, string_pdb):
          'Parallel': parallel_norm, 
          'Series': series_norm, 'Cross': cross_norm, 'N contacts':data_CT['N contacts']}
         df= pd.DataFrame(data=df_norm)
-    else:
+    if  (N_contacts and N_circuits):
+        
+        #Normalize parameters by number of contacts
+        parallel_norm= data_CT['Parallel']/data_CT['N contacts']
+        series_norm= data_CT['Series']/data_CT['N contacts']
+        cross_norm=data_CT['Cross']/data_CT['N contacts']
+
+        #Create normalized merged database
+        df_norm={'PDB Id':data['PDB Id'], 'Protein Length': data['Protein Length'], 
+                 'Contact Order': data['Contact Order'], 'Folding rate': data['ln kf'],
+                 'Folding Type':data['Folding Type'],'Parallel': parallel_norm,
+                 'Series': series_norm, 'Cross': cross_norm, 'N contacts':data_CT['N contacts'],
+                 'N circuits': data_CT['N circuits'],'mean length':data_CT['meanlength'], 
+                 'N circuits norm':data_CT['N circuits']/data['New Length']}
+        df= pd.DataFrame(data=df_norm)
+        
+    elif N_circuits:
         protein_df={'PDB Id':data['PDB Id'], 'Protein Length': data['Protein Length'], 
         'Contact Order': data['Contact Order'], 'Folding rate': data['ln kf'], 
         'Folding Type':data['Folding Type'], 'N circuits': data_CT['N circuits'],
