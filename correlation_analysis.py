@@ -227,8 +227,9 @@ def correlation_map_database(lower_lim, upper_lim, data_two, data_multi, corr_qu
     
     for t in range(len(list_db)):        
         CO_corr=correlate(list_db[t][corr_quantity],list_db[t]['ln kf'])
-        pvalue[t]="%.2f" % round(CO_corr[1], 2)
-        matrix[t]="%.2f" % round(CO_corr[0], 2)
+        print(CO_corr[1])
+        pvalue[t]="%.3f" % round(CO_corr[1], 3)
+        matrix[t]="%.3f" % round(CO_corr[0], 3)
         
     pvalue=1-pvalue
     pvalue[pvalue>=0.95]=1
@@ -322,3 +323,92 @@ def merge_datasets(data, data_CT, string_pdb):
 
     df=remove_pdbs(df, string_pdb)
     return df
+
+
+def fractions_fit_size(data_two, data_multi):
+    color_graph= 'b'
+    color_graph_2= 'orange'
+
+    fractions=['Series', 'Parallel', 'Cross']
+    dfs=[data_two, data_multi]
+    corr_coeffs=[]
+    p_coeffs=[]
+
+    index=0
+    for t in range(len(dfs)):
+        for j in range(len(fractions)):
+            corr=correlate(dfs[t][fractions[j]],dfs[t]['Protein Length'])
+            corr_coeffs.append("%.2f" % round(corr[0], 2))
+            p_coeffs.append("%.3f" % round(corr[1], 3))
+            if (p_coeffs[index]=='0.000'):
+                 p_coeffs[index]= "%.1E" % corr[1]
+            index=index+1
+
+    series_corr_two=corr_coeffs[0]
+    parallel_corr_two=corr_coeffs[1]
+    cross_corr_two=corr_coeffs[2]
+    series_corr_multi=corr_coeffs[3]
+    parallel_corr_multi=corr_coeffs[4]
+    cross_corr_multi=corr_coeffs[5]
+
+    series_pvalue_two=p_coeffs[0]
+    parallel_pvalue_two=p_coeffs[1]
+    cross_pvalue_two=p_coeffs[2]
+    series_pvalue_multi=p_coeffs[3]
+    parallel_pvalue_multi=p_coeffs[4]
+    cross_pvalue_multi=p_coeffs[5]
+
+    fig, ax = plt.subplots(nrows=1, ncols=3)
+    fig.set_figheight(4)
+    fig.set_figwidth(15)
+    ax[0].set_title('Series', fontsize=20)
+    ax[0].scatter(data_two["Series"],data_two['Protein Length'],
+                  label= 'corr_two= {}, p= {}'.format(series_corr_two, series_pvalue_two), 
+                  color= color_graph)
+    ax[0].scatter(data_multi["Series"],data_multi['Protein Length'],
+                  label= 'corr_multi= {}, p={}'.format(series_corr_multi, series_pvalue_multi), 
+                  color=color_graph_2)
+    fit_Series_multi=lin_fit(data_multi["Series"],data_multi['Protein Length'])
+    fit_Series_two=lin_fit(data_two["Series"],data_two['Protein Length'])
+    ax[0].legend()
+    ax[0].plot(data_multi["Series"],fit_Series_multi, color=color_graph_2)
+    ax[0].plot(data_two["Series"],fit_Series_two,color= color_graph)
+    ax[0].set_xlabel('Series (%)')
+    ax[0].set_ylabel('Protein Length (n residues)')
+
+    
+    ax[1].set_title('Parallel', fontsize=20)
+    ax[1].scatter(data_two["Parallel"],data_two['Protein Length'], 
+                  label= 'corr_two= {}, p= {}'.format(parallel_corr_two, parallel_pvalue_two), 
+                  color= color_graph)
+    ax[1].scatter(data_multi["Parallel"],data_multi['Protein Length'], 
+                  label= 'corr_multi= {}, p= {}'.format(parallel_corr_multi, parallel_pvalue_multi),
+                        color= color_graph_2)
+    fit_Parallel_multi=lin_fit(data_multi["Parallel"],data_multi['Protein Length'])
+    fit_Parallel_two=lin_fit(data_two["Parallel"],data_two['Protein Length'])
+    ax[1].legend()
+    ax[1].plot(data_two["Parallel"],fit_Parallel_two, color= color_graph)
+    ax[1].plot(data_multi["Parallel"],fit_Parallel_multi,color= color_graph_2)
+    ax[1].set_xlabel('Parallel (%)')
+  
+    ax[2].set_title('Cross',fontsize=20)
+    ax[2].scatter(data_two["Cross"],data_two['Protein Length'], 
+                  label= 'corr_two= {}, p= {}'.format(cross_corr_two, cross_pvalue_two), 
+                  color= color_graph)
+    ax[2].scatter(data_multi["Cross"],data_multi['Protein Length'], 
+                  label= 'corr_multi= {}, p= {}'.format(cross_corr_multi, cross_pvalue_multi),
+                  color= color_graph_2)
+    fit_Cross_multi=lin_fit(data_multi["Cross"],data_multi['Protein Length'])
+    fit_Cross_two=lin_fit(data_two["Cross"],data_two['Protein Length'])
+    ax[2].legend()  
+    ax[2].plot(data_two["Cross"],fit_Cross_two,color= color_graph)
+    ax[2].plot(data_multi["Cross"],fit_Cross_multi,color= color_graph_2)
+    ax[2].set_xlabel('Cross (%)')
+    
+    
+    correlation_vec_two=[series_corr_two, series_pvalue_two, parallel_corr_two,
+                         parallel_pvalue_two, cross_corr_two, cross_pvalue_two]  
+    correlation_vec_multi=[series_corr_multi, series_pvalue_multi,
+                           parallel_corr_multi,parallel_pvalue_multi, 
+                           cross_corr_multi, cross_pvalue_multi] 
+    return correlation_vec_two,correlation_vec_multi
