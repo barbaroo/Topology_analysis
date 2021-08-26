@@ -75,10 +75,10 @@ def fractions_fit(data_two, data_multi):
     fig.set_figwidth(15)
     ax[0].set_title('Series', fontsize=20)
     ax[0].scatter(data_two["Series"],data_two['Folding rate'],
-                  label= 'corr_two= {}, p= {}'.format(series_corr_two, series_pvalue_two), 
+                  label= 'corr= {}, p= {}'.format(series_corr_two, series_pvalue_two), 
                   color= color_graph)
     ax[0].scatter(data_multi["Series"],data_multi['Folding rate'],
-                  label= 'corr_multi= {}, p={}'.format(series_corr_multi, series_pvalue_multi), 
+                  label= 'corr= {}, p={}'.format(series_corr_multi, series_pvalue_multi), 
                   color=color_graph_2)
     fit_Series_multi=lin_fit(data_multi["Series"],data_multi['Folding rate'])
     fit_Series_two=lin_fit(data_two["Series"],data_two['Folding rate'])
@@ -91,10 +91,10 @@ def fractions_fit(data_two, data_multi):
     
     ax[1].set_title('Parallel', fontsize=20)
     ax[1].scatter(data_two["Parallel"],data_two['Folding rate'], 
-                  label= 'corr_two= {}, p= {}'.format(parallel_corr_two, parallel_pvalue_two), 
+                  label= 'corr= {}, p= {}'.format(parallel_corr_two, parallel_pvalue_two), 
                   color= color_graph)
     ax[1].scatter(data_multi["Parallel"],data_multi['Folding rate'], 
-                  label= 'corr_multi= {}, p= {}'.format(parallel_corr_multi, parallel_pvalue_multi),
+                  label= 'corr= {}, p= {}'.format(parallel_corr_multi, parallel_pvalue_multi),
                         color= color_graph_2)
     fit_Parallel_multi=lin_fit(data_multi["Parallel"],data_multi['Folding rate'])
     fit_Parallel_two=lin_fit(data_two["Parallel"],data_two['Folding rate'])
@@ -105,10 +105,10 @@ def fractions_fit(data_two, data_multi):
   
     ax[2].set_title('Cross',fontsize=20)
     ax[2].scatter(data_two["Cross"],data_two['Folding rate'], 
-                  label= 'corr_two= {}, p= {}'.format(cross_corr_two, cross_pvalue_two), 
+                  label= 'corr= {}, p= {}'.format(cross_corr_two, cross_pvalue_two), 
                   color= color_graph)
     ax[2].scatter(data_multi["Cross"],data_multi['Folding rate'], 
-                  label= 'corr_multi= {}, p= {}'.format(cross_corr_multi, cross_pvalue_multi),
+                  label= 'corr= {}, p= {}'.format(cross_corr_multi, cross_pvalue_multi),
                   color= color_graph_2)
     fit_Cross_multi=lin_fit(data_multi["Cross"],data_multi['Folding rate'])
     fit_Cross_two=lin_fit(data_two["Cross"],data_two['Folding rate'])
@@ -224,19 +224,34 @@ def correlation_map_database(lower_lim, upper_lim, data_two, data_multi, corr_qu
     
     matrix=np.zeros((len(list_db),1))
     pvalue=np.zeros((len(list_db),1))
+    list_two=np.zeros(6)
+    list_multi=np.zeros(6)
     
     for t in range(len(list_db)):        
         CO_corr=correlate(list_db[t][corr_quantity],list_db[t]['ln kf'])
         print(CO_corr[1])
         pvalue[t]="%.3f" % round(CO_corr[1], 3)
         matrix[t]="%.3f" % round(CO_corr[0], 3)
+
+        if (pvalue[t]==0.000):
+                 pvalue[t]= "%.1E" % CO_corr[1]
+        
+        div=np.mod(t,2)
+        if (div==0):
+            list_two[t]=matrix[t]
+            list_two[t+1]=pvalue[t]
+        else:
+            list_multi[t-1]=matrix[t]
+            list_multi[t]=pvalue[t]
+    
+    
         
     pvalue=1-pvalue
     pvalue[pvalue>=0.95]=1
     pvalue[pvalue<0.95]=0.0
     corr_corrected=matrix*pvalue
     
-    return corr_corrected
+    return corr_corrected, list_two, list_multi
 
 
 def barplot_fractions(data, upper_lim, lower_lim):
@@ -294,7 +309,8 @@ def merge_datasets(data, data_CT, string_pdb):
                  'Contact Order': data['Contact Order'], 
          'Folding rate': data['ln kf'], 'Folding Type':data['Folding Type'], 
          'Parallel': parallel_norm, 
-         'Series': series_norm, 'Cross': cross_norm, 'N contacts':data_CT['N contacts']}
+         'Series': series_norm, 'Cross': cross_norm, 'N contacts':data_CT['N contacts'],
+         'PDB Length': data_CT['New Length']}
         df= pd.DataFrame(data=df_norm)
     if  (N_contacts and N_circuits):
         
