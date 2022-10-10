@@ -9,7 +9,7 @@ message: >-
 type: software
 authors:
   - given-names: 'Barbara '
-    name-particle: Barbara
+    name-particle: 
     family-names: Scalvini
     email: barbaralongview@gmail.com
     affiliation: Leiden University
